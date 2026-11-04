@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/boss/arena.gd" id="1_arena"]
+[ext_resource type="Resource" path="res://recursos/boss/arena.tres" id="2_dados"]
+
+[node name="Arena" type="Node2D"]
+script = ExtResource("1_arena")
+dados = ExtResource("2_dados")
