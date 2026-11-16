@@ -16,6 +16,8 @@ const ARG_TESTE = "--atualizador-teste="
 const PREFIXO_TESTE = "http://127.0.0.1:"
 # Só junto com a URL de teste: aceita a pergunta sozinho (testes sem clique)
 const ARG_ACEITAR = "--atualizador-aceitar"
+# Download sem bytes novos por este tempo = desiste (não há limite de tempo total: internet lenta termina)
+const PARADO_MAX = 30.0
 const FONTE = preload("res://fonts/atari-classic-font/AtariClassic-gry3.ttf")
 
 # Uma checagem por execução: voltar ao menu não pergunta de novo
@@ -28,6 +30,8 @@ var http: HTTPRequest
 var asset = {}
 var pendente = false
 var baixando = false
+var bytes_vistos = -1
+var visto_em = 0
 var raiz: Control
 var texto: Label
 var botao_sim: Button
@@ -58,8 +62,16 @@ func _process(_delta):
 		if _url_teste() != "" and ARG_ACEITAR in OS.get_cmdline_args() + OS.get_cmdline_user_args():
 			_baixar()
 	if baixando:
-		var total = int(asset.size)
-		texto.text = "BAIXANDO... %d%%" % (100 * http.get_downloaded_bytes() / total)
+		var bytes = http.get_downloaded_bytes()
+		var agora = Time.get_ticks_msec()
+		if bytes != bytes_vistos:
+			bytes_vistos = bytes
+			visto_em = agora
+		elif agora - visto_em > PARADO_MAX * 1000:
+			baixando = false
+			_falhar("DOWNLOAD PARADO.")
+			return
+		texto.text = "BAIXANDO... %d%%" % (100 * bytes / int(asset.size))
 
 # Esc com a pergunta aberta = AGORA NÃO (durante o download não fecha)
 func _input(event):
@@ -175,13 +187,15 @@ func _baixar():
 	botao_nao.visible = false
 	http = HTTPRequest.new()
 	http.download_file = exe + ".novo"
-	http.timeout = 300.0
+	http.timeout = 0.0 # o timeout do HTTPRequest é tempo TOTAL; quem desiste é o _process (PARADO_MAX)
 	http.download_chunk_size = 1048576 # o padrão (64 KB por quadro) limita o download a ~4 MB/s
 	add_child(http)
 	http.request_completed.connect(_on_baixou)
 	if http.request(asset.browser_download_url, CABECALHOS) != OK:
 		_falhar("NÃO CONSEGUI BAIXAR.")
 		return
+	bytes_vistos = -1
+	visto_em = Time.get_ticks_msec()
 	baixando = true
 
 # Download terminou: confere, troca os arquivos sem nunca ficar sem exe, abre o novo e sai
