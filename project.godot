@@ -20,6 +20,7 @@ config/icon="uid://bfwisjbieqs0h"
 [audio]
 
 buses/default_bus_layout="uid://i7v6ygxerfk"
+general/default_playback_type.web=0
 
 [autoload]
 
@@ -91,4 +92,5 @@ pause={
 
 textures/canvas_textures/default_texture_filter=0
 rendering_device/driver.windows="d3d12"
+renderer/rendering_method.web="gl_compatibility"
 environment/defaults/default_clear_color=Color(0.003921569, 0, 0.09411765, 1)
