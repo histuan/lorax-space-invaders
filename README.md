@@ -2,9 +2,9 @@
 
 A Space Invaders-style arcade shooter built with Godot 4 and GDScript, themed around *The Lorax*.
 
-*you are an unpaid intern and must destroy the last trees from the universe to ensure freedom to all.*
+*You are an unpaid intern who must destroy the last trees in the universe to ensure freedom for all.*
 
-Developed as a course project for the Computer Science program at Universidade de Fortaleza (Unifor). It started from a base project provided in class and was expanded with original gameplay systems, pixel art and sound.
+Developed as a course project for the Computer Science program at Universidade de Fortaleza (UNIFOR). It started from a base project provided in class and was expanded with original gameplay systems, pixel art and sound.
 
 ## Features
 
@@ -31,12 +31,19 @@ Developed as a course project for the Computer Science program at Universidade d
 1. Install [Godot 4.7](https://godotengine.org/download) (standard version, not .NET).
 2. Clone the repository:
    ```bash
-   git clone https://github.com/histuan/projects.git
+   git clone https://github.com/histuan/lorax-space-invaders.git
    ```
-3. In the Godot Project Manager, click **Import** and select `lorax-space-invaders/project.godot`.
+3. In the Godot Project Manager, click **Import** and select `project.godot` in the cloned folder.
 4. Press **F5** to play.
 
 On first launch Godot re-imports all assets, which may take a moment.
+
+## Branches
+
+| Branch | Content |
+|---|---|
+| `main` | Stable version of the game. |
+| `boss-battle` | Work in progress: the final boss fight against the Lorax. |
 
 ## Project structure
 
@@ -56,6 +63,6 @@ lorax-space-invaders/
 
 ## Credits
 
-- Code, pixel art and sound effects(except the chainsaw sound, motosserra.wav): Thiago Uchoa Gomes
+- Code, pixel art and sound effects (except the chainsaw sound, motosserra.wav): Thiago Uchoa Gomes
 
 *The Lorax* is a creation of Dr. Seuss. This is a non-commercial student project with no affiliation with the rights holders.
