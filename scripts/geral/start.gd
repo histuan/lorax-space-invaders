@@ -29,6 +29,7 @@ var base_y = {}
 const DetectorCodigo = preload("res://scripts/geral/detector_codigo.gd")
 const SeletorEtapa = preload("res://scripts/geral/seletor_etapa.gd")
 const PAUSE_MENU = preload("res://cenas/geral/pause_menu.tscn")
+const ATUALIZADOR = preload("res://scripts/geral/atualizador.gd")
 
 var detector
 var seletor
@@ -39,12 +40,16 @@ var menu
 var menu_aberto = false
 # Quadro em que o menu fechou: o Enter que aperta o VOLTAR não pode iniciar o jogo no mesmo quadro
 var quadro_fechou = -10
+# Pergunta de versão nova (só no exe do Windows): com ela aberta, o Enter e as setas são dela
+var atualizador
+var atualizador_aberto = false
 
 # Guarda os valores originais para animar a partir deles
 func _ready():
 	Partida.limpar_etapa()
 	criar_menu()
 	criar_cheat()
+	criar_atualizador()
 	escala_lorax = lorax.scale
 	splash.text = FRASES.pick_random()
 	for s in $CanvasLayer/sprites.get_children():
@@ -54,6 +59,7 @@ func _ready():
 # Anima tudo com senos do tempo
 func _process(delta):
 	tempo += delta
+	atualizador.pode_perguntar = not saindo and not seletor_aberto and not menu_aberto
 	if saindo:
 		return
 
@@ -79,7 +85,7 @@ func _process(delta):
 		s.position.y = base_y[s] + round(sin(tempo * 2.0 + i) * 1.5)
 		i += 1
 
-	var enter_livre = not seletor_aberto and not menu_aberto and Engine.get_process_frames() - quadro_fechou > 1
+	var enter_livre = not seletor_aberto and not menu_aberto and not atualizador_aberto and Engine.get_process_frames() - quadro_fechou > 1
 	if Input.is_action_just_pressed("ui_accept") and enter_livre:
 		comecar()
 
@@ -112,9 +118,29 @@ func criar_cheat():
 	seletor.etapa_escolhida.connect(_on_etapa_escolhida)
 	seletor.cancelado.connect(_fechar_seletor)
 
+# Cria o atualizador (ele mesmo decide se age) e liga a pergunta à trava do Enter
+func criar_atualizador():
+	atualizador = ATUALIZADOR.new()
+	add_child(atualizador)
+	atualizador.abriu.connect(_on_atualizador_abriu)
+	atualizador.fechou.connect(_on_atualizador_fechou)
+
+# Pergunta aberta: Konami e menu de Esc desligados
+func _on_atualizador_abriu():
+	atualizador_aberto = true
+	detector.ativo = false
+	menu.pode_abrir = false
+
+# Pergunta fechada: volta tudo e guarda o quadro para a trava do Enter
+func _on_atualizador_fechou():
+	atualizador_aberto = false
+	quadro_fechou = Engine.get_process_frames()
+	detector.ativo = true
+	menu.pode_abrir = true
+
 # Código certo: abre a lista com as etapas de Partida.NOMES_ETAPAS
 func _abrir_seletor():
-	if saindo or seletor_aberto or menu_aberto:
+	if saindo or seletor_aberto or menu_aberto or atualizador_aberto:
 		return
 	var opcoes = []
 	for etapa in Partida.NOMES_ETAPAS:
