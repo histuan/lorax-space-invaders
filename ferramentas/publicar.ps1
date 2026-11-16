@@ -40,4 +40,4 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-Path $exe)) { throw "Export falhou." }
 $notas = Read-Host "Notas da Release (Enter = sem notas)"
 Write-Host "gh release create v$Versao `"$exe`" --target $sha --title v$Versao"
 if ((Read-Host "Criar a Release agora? (s/n)") -ne "s") { Write-Host "Cancelado."; exit 0 }
-gh release create "v$Versao" "$exe" --target $sha --title "v$Versao" --notes "$notas"
+gh release create "v$Versao" "$exe" --target $sha --title "v$Versao" "--notes=$notas" # um argumento só: o PowerShell 5.1 descarta "" sozinho
