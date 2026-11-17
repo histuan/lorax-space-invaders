@@ -30,6 +30,12 @@ const DetectorCodigo = preload("res://scripts/geral/detector_codigo.gd")
 const SeletorEtapa = preload("res://scripts/geral/seletor_etapa.gd")
 const PAUSE_MENU = preload("res://cenas/geral/pause_menu.tscn")
 const ATUALIZADOR = preload("res://scripts/geral/atualizador.gd")
+const FONTE = preload("res://fonts/atari-classic-font/AtariClassic-gry3.ttf")
+# Número da versão (valores TESTE): a barra de controles ocupa o rodapé (y 238), então fica logo acima dela
+const VERSAO_TAMANHO = 8
+const VERSAO_COR = Color(0.012, 0.012, 0.012, 0.882)
+const VERSAO_MARGEM = 2
+const VERSAO_TOPO_BARRA = 238
 
 var detector
 var seletor
@@ -50,6 +56,7 @@ func _ready():
 	criar_menu()
 	criar_cheat()
 	criar_atualizador()
+	criar_versao()
 	escala_lorax = lorax.scale
 	splash.text = FRASES.pick_random()
 	for s in $CanvasLayer/sprites.get_children():
@@ -107,6 +114,17 @@ func _on_menu_fechou():
 	menu_aberto = false
 	quadro_fechou = Engine.get_process_frames()
 	detector.ativo = true
+
+# Mostra "v" + a versão do project.godot no canto de baixo, à esquerda
+func criar_versao():
+	var label = Label.new()
+	label.text = "v" + str(ProjectSettings.get_setting("application/config/version", ""))
+	label.add_theme_font_override("font", FONTE)
+	label.add_theme_font_size_override("font_size", VERSAO_TAMANHO)
+	label.add_theme_color_override("font_color", VERSAO_COR)
+	$CanvasLayer/controles.add_sibling(label)
+	label.reset_size()
+	label.position = Vector2(VERSAO_MARGEM, VERSAO_TOPO_BARRA - VERSAO_MARGEM - label.size.y)
 
 # Cria o detector do código Konami e o seletor de etapa e liga os sinais
 func criar_cheat():
