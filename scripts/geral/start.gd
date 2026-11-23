@@ -52,6 +52,9 @@ var atualizador_aberto = false
 
 # Guarda os valores originais para animar a partir deles
 func _ready():
+	if ATUALIZADOR.gravar_versao_pedida(get_tree()):
+		set_process(false)
+		return
 	Partida.limpar_etapa()
 	criar_menu()
 	criar_cheat()

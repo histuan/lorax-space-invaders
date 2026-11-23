@@ -3,6 +3,7 @@
 extends Node
 
 const ARQUIVO = "user://configuracoes.cfg"
+const ATUALIZADOR = preload("res://scripts/geral/atualizador.gd")
 # Volume → bus que ele controla
 const BUS_DO_VOLUME = {"geral": &"Master", "musica": &"Musica", "efeitos": &"Efeitos", "voz": &"Voz"}
 
@@ -41,7 +42,9 @@ func aplicar_volumes():
 func carregar():
 	var cfg = ConfigFile.new()
 	if cfg.load(ARQUIVO) != OK:
-		salvar()
+		# A conferência do publicar.ps1 não pode criar nada em user://
+		if ATUALIZADOR.arquivo_gravar_versao() == "":
+			salvar()
 		return
 	reduzir_efeitos = cfg.get_value("efeitos", "reduzir_efeitos", reduzir_efeitos)
 	volume_geral = cfg.get_value("volumes", "geral", volume_geral)

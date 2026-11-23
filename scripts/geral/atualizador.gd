@@ -16,6 +16,9 @@ const ARG_TESTE = "--atualizador-teste="
 const PREFIXO_TESTE = "http://127.0.0.1:"
 # Só junto com a URL de teste: aceita a pergunta sozinho (testes sem clique)
 const ARG_ACEITAR = "--atualizador-aceitar"
+# O publicar.ps1 confere o exe novo: grava a versão neste arquivo e sai (arquivo, pois o exe release não tem stdout)
+const ARG_GRAVAR_VERSAO = "--gravar-versao="
+const REGEX_VERSAO = "^v?\\d+\\.\\d+\\.\\d+$"
 # Download sem bytes novos por este tempo = desiste (não há limite de tempo total: internet lenta termina)
 const PARADO_MAX = 30.0
 const FONTE = preload("res://fonts/atari-classic-font/AtariClassic-gry3.ttf")
@@ -73,22 +76,41 @@ func _process(_delta):
 			return
 		texto.text = "BAIXANDO... %d%%" % (100 * bytes / int(asset.size))
 
-# Esc com a pergunta aberta = AGORA NÃO (durante o download não fecha)
+# Esc com a pergunta aberta = AGORA NÃO (durante o download e a conferência não fecha)
 func _input(event):
-	if raiz and raiz.visible and not baixando and (event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel")):
+	if raiz and raiz.visible and botao_nao.visible and (event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel")):
 		get_viewport().set_input_as_handled()
 		_fechar()
 
-# Compara versões por partes inteiras (0.10.0 > 0.9.0); parte que falta conta como 0
+# Compara versões X.Y.Z por partes inteiras (0.10.0 > 0.9.0); qualquer outro formato = false
 static func versao_maior(nova: String, atual: String) -> bool:
-	var a = nova.split(".")
-	var b = atual.split(".")
-	for i in max(a.size(), b.size()):
-		var x = a[i].to_int() if i < a.size() else 0
-		var y = b[i].to_int() if i < b.size() else 0
-		if x != y:
-			return x > y
+	var regex = RegEx.create_from_string(REGEX_VERSAO)
+	if not regex.search(nova) or not regex.search(atual):
+		return false
+	var a = nova.trim_prefix("v").split(".")
+	var b = atual.trim_prefix("v").split(".")
+	for i in 3:
+		if a[i].to_int() != b[i].to_int():
+			return a[i].to_int() > b[i].to_int()
 	return false
+
+# Caminho pedido em --gravar-versao=; vazio = execução normal
+static func arquivo_gravar_versao() -> String:
+	for arg in OS.get_cmdline_args() + OS.get_cmdline_user_args():
+		if arg.begins_with(ARG_GRAVAR_VERSAO):
+			return arg.trim_prefix(ARG_GRAVAR_VERSAO)
+	return ""
+
+# Se foi pedido, grava a versão no arquivo, fecha o jogo e devolve true
+static func gravar_versao_pedida(arvore: SceneTree) -> bool:
+	var caminho = arquivo_gravar_versao()
+	if caminho == "":
+		return false
+	var arquivo = FileAccess.open(caminho, FileAccess.WRITE)
+	var gravou = arquivo != null and arquivo.store_string(str(ProjectSettings.get_setting("application/config/version", "")))
+	arquivo = null # fecha antes de sair
+	arvore.quit(0 if gravou else 1)
+	return true
 
 # Apaga o .old (exe antigo) e o .novo (download pela metade); falhou = tenta na próxima abertura
 func _apagar_sobras():
@@ -213,9 +235,12 @@ func _on_baixou(result, codigo, _cabecalhos, _corpo):
 		_falhar("ARQUIVO INCOMPLETO.")
 		return
 	var digest = str(asset.get("digest", ""))
-	if digest.begins_with("sha256:") and FileAccess.get_sha256(novo) != digest.trim_prefix("sha256:"):
-		_falhar("ARQUIVO CORROMPIDO.")
-		return
+	if digest.begins_with("sha256:"):
+		texto.text = "CONFERINDO..."
+		await get_tree().process_frame # o sha256 trava o quadro: o texto precisa aparecer antes
+		if FileAccess.get_sha256(novo) != digest.trim_prefix("sha256:"):
+			_falhar("ARQUIVO CORROMPIDO.")
+			return
 	if not trocar_arquivos(exe):
 		_falhar("NÃO CONSEGUI TROCAR O JOGO.")
 		return
